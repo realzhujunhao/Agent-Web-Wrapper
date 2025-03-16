@@ -1,0 +1,12 @@
+.DS_Store
+target/
+build/
+dist/
+logs/
+server_data/
+.env.local
+.env.*.local
+node_modules/
+backup.toml
+server_log/
+server_data/
