@@ -12,10 +12,11 @@ import {
     Avatar,
     Sidebar,
     ExpansionPanel,
-    ArrowButton
+    ArrowButton,
+    Button
 } from '@chatscope/chat-ui-kit-react';
 
-export default function ChatComponent({ messageList }) {
+export default function ChatComponent({ messageList, sendMessage, clearHistory }) {
     console.log(`debug: ChatComponent args, ${JSON.stringify(messageList)}`)
     const [showSidebar, setShowSidebar] = useState(false);
     const toggleSidebar = () => {
@@ -56,6 +57,9 @@ export default function ChatComponent({ messageList }) {
             </Message>;
     });
 
+    // conditional type indicator
+    const [isTyping, setIsTyping] = useState(false);
+
     return (
         <MainContainer
             style={{
@@ -74,13 +78,15 @@ export default function ChatComponent({ messageList }) {
                         userName="养寿生得道AI"
                     />
                     <ConversationHeader.Actions>
+                        <Button onClick={clearHistory}>清空聊天记录</Button>
+                        &nbsp;&nbsp;&nbsp;
                         <ArrowButton
                             direction={showSidebar ? "right" : "left"}
                             onClick={toggleSidebar}
                         />
                     </ConversationHeader.Actions>
                 </ConversationHeader>
-                <MessageList typingIndicator={<TypingIndicator content="(AI/人工 TODO)正在输入" />}>
+                <MessageList typingIndicator={isTyping ? <TypingIndicator content="对方正在输入" /> : null}>
                     {messageElements}
                 </MessageList>
                 <MessageInput
@@ -88,8 +94,10 @@ export default function ChatComponent({ messageList }) {
                     onAttachClick={function attach() {
                         alert("debug: attach");
                     }}
-                    onSend={function send() {
-                        alert("debug: send");
+                    onSend={function send(_innerHtml, textContent, _innerText, _nodes) {
+                        setIsTyping(true);
+                        sendMessage(textContent)
+                            .then(() => setIsTyping(false));
                     }}
                 />
             </ChatContainer>

@@ -3,6 +3,74 @@ import ChatComponent from "@/components/ChatComponent";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 
+async function fetchHistory(serverDomain, token) {
+    const resp = await fetch(`${serverDomain}/fetch-history`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(null),
+    });
+    if (!resp.ok) {
+        alert(`Error: fetch history status ${resp.status}`);
+        return;
+    }
+    const result = await resp.json();
+    if (result.success) {
+        return result.data
+    } else {
+        alert(`Error: fetch history server ${resp.err}`)
+        return null;
+    }
+}
+
+async function askAgent(serverDomain, token, query) {
+    const resp = await fetch(`${serverDomain}/ask-agent`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+            "message": query
+        }),
+    });
+    if (!resp.ok) {
+        alert(`Error: send message status ${resp.status}`);
+        return;
+    }
+    const result = await resp.json();
+    if (result.success) {
+        return result.data
+    } else {
+        alert(`Error: send message server ${resp.err}`)
+        return null;
+    }
+}
+
+async function clearHistory(serverDomain, token) {
+    const resp = await fetch(`${serverDomain}/clear-history`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(null),
+    });
+    if (!resp.ok) {
+        alert(`Error: clear history status ${resp.status}`);
+        return;
+    }
+    const result = await resp.json();
+    if (result.success) {
+        return result.data
+    } else {
+        alert(`Error: clear history server ${resp.err}`)
+        return null;
+    }
+}
+
 export default function Home() {
     const serverDomain = "http://localhost:8085";
     const [token, setToken] = useState(null);
@@ -55,33 +123,29 @@ export default function Home() {
 
 
     const [messageList, setMessageList] = useState(null);
-    // message list
-    const loadChatHistory = async () => {
-        const resp = await fetch(`${serverDomain}/fetch-history`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(null),
-        });
-        if (!resp.ok) {
-            alert(`Error: fetch history status ${resp.status}`);
-            return;
-        }
-        const result = await resp.json();
-        if (result.success) {
-            setMessageList(result.data)
-            console.log("debug: receive message list")
-            console.log(result.data);
-        }
+    const reloadHistory = async () => {
+        console.log("debug: trigger reload")
+        const data = await fetchHistory(serverDomain, token);
+        console.log(`debug: messageList: ${JSON.stringify(messageList)}`)
+        setMessageList(data);
     };
-
     useEffect(() => {
         if (token) {
-            loadChatHistory();
+            reloadHistory();
         }
     }, [token]);
+
+    const sendMessage = async (query) => {
+        console.log("debug: trigger sendMessage");
+        await askAgent(serverDomain, token, query);
+        reloadHistory();
+    };
+
+    const clearConversation = async () => {
+        console.log("debug: trigger clearHistory");
+        await clearHistory(serverDomain, token);
+        reloadHistory();
+    };
 
     // conditional rendering
     return (
@@ -90,6 +154,8 @@ export default function Home() {
                 token && messageList &&
                 <ChatComponent
                     messageList={messageList}
+                    sendMessage={sendMessage}
+                    clearHistory={clearConversation}
                 />
             }
         </>
