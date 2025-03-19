@@ -11,6 +11,8 @@
   "dependencies": {
     "@chatscope/chat-ui-kit-react": "^2.0.3",
     "@chatscope/chat-ui-kit-styles": "^1.4.0",
+    "cookie": "^1.0.2",
+    "js-cookie": "^3.0.5",
     "next": "15.2.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
