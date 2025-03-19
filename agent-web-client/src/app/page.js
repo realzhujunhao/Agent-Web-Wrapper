@@ -6,9 +6,11 @@ import { useEffect, useState } from "react";
 export default function Home() {
     const serverDomain = "http://localhost:8085";
     const [token, setToken] = useState(null);
+
+    // session
     const testAndSetToken = async () => {
         const existingToken = Cookies.get("jwt");
-        if (existingToken) {
+        if (existingToken && existingToken != token) {
             setToken(existingToken);
             console.log("debug: cookie exists");
             console.log(existingToken);
@@ -32,12 +34,10 @@ export default function Home() {
             console.log(result);
 
             if (result.success) {
-                if (result.data) {
-                    Cookies.set("jwt", result.data, { expires: 30 });
-                    setToken(result.data);
-                    console.log("debug: set cookie")
-                    console.log(result.data);
-                }
+                Cookies.set("jwt", result.data, { expires: 30 });
+                setToken(result.data);
+                console.log("debug: set cookie")
+                console.log(result.data);
             } else {
                 // unreachable!
                 alert(`Error: Init session server error ${result.err}`);
@@ -53,7 +53,45 @@ export default function Home() {
         console.log(`debug: now token is ${token}`);
     }, [token]);
 
+
+    const [messageList, setMessageList] = useState(null);
+    // message list
+    const loadChatHistory = async () => {
+        const resp = await fetch(`${serverDomain}/fetch-history`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(null),
+        });
+        if (!resp.ok) {
+            alert(`Error: fetch history status ${resp.status}`);
+            return;
+        }
+        const result = await resp.json();
+        if (result.success) {
+            setMessageList(result.data)
+            console.log("debug: receive message list")
+            console.log(result.data);
+        }
+    };
+
+    useEffect(() => {
+        if (token) {
+            loadChatHistory();
+        }
+    }, [token]);
+
+    // conditional rendering
     return (
-        <ChatComponent />
+        <>
+            {
+                token && messageList &&
+                <ChatComponent
+                    messageList={messageList}
+                />
+            }
+        </>
     );
 }
